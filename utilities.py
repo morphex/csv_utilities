@@ -7,7 +7,7 @@ import csv, sys
 ZERO = Decimal(0)
 SNIFFER = csv.Sniffer()
 
-from utilities import DEBUG_PRINT
+from developer_tools.utilities import DEBUG_PRINT
 
 def guess_separator(csv_data_lines, default=","):
     """Returns a guess at what the column separator is in the CSV data."""
@@ -146,7 +146,46 @@ def to_strptime(date_format, time_format, separator):
         time_format_string = ""
     return date_format_string + separator + time_format_string
 
-def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
+accepted_characters = "0123456789-,."
+
+def convert_text_to_number(text):
+    """Converts a text with various symbols into a number."""
+    new = ""
+    for item in text:
+        if item in accepted_characters:
+            new += item
+    return Decimal(new)
+
+def csv_strip(text):
+    print(text)
+    if text.startswith(") and text.endswith("):
+        return text[1:-1]
+    elif text.startswith(') and text.endswith('):
+        return text[1:-1]
+    else:
+        return text
+
+def csv_split(line, separator):
+    items = [""]
+    in_quotes = False
+    for character in line:
+        if character == separator:
+            if in_quotes:
+                items[-1] += character
+            else:
+                items.append("")
+        elif character == '"':
+            if in_quotes:
+                in_quotes = False
+            else:
+                in_quotes = True
+        else:
+            items[-1] += character
+    return items
+                
+    
+def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False,
+               number=False, make_number=False):
     """Sorts CSV lines based on a field."""
     separator = guess_separator(csv_lines)
     has_header = SNIFFER.has_header("\n".join(csv_lines[0:3]))
@@ -154,8 +193,17 @@ def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
     if has_header:
         csv_lines.pop(0)
     for index in range(len(csv_lines)):
-        csv_lines[index] = csv_lines[index].split(separator)
-    if datetime_:
+        csv_lines[index] = csv_split(csv_lines[index], separator)
+    if number:
+        for index in range(len(csv_lines)):
+            DEBUG_PRINT("CSV line:", csv_lines[index])
+            number_ = csv_lines[index][field].replace(",", ".")
+            if make_number:
+                number_ = convert_text_to_number(number_)
+            else:
+                number_ = Decimal(number_)
+            csv_lines[index][field] = number_
+    elif datetime_:
         date_format, time_format, datetime_separator = \
           guess_datetime_format(map(lambda x: x[field], csv_lines))
         strptime_format = to_strptime(date_format, time_format, datetime_separator)
@@ -164,7 +212,7 @@ def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False):
             csv_lines[index][field] = datetime.strptime(csv_lines[index][field],
                                                         strptime_format)
     csv_lines.sort(key=lambda x: x[field])
-    if not keep_datetime_objects:
+    if datetime_ and not keep_datetime_objects:
         for index in range(len(csv_lines)):
             csv_lines[index][field] = csv_lines[index][field].strftime(strptime_format)
     return separator

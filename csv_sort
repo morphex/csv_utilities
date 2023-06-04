@@ -12,6 +12,9 @@ Filename defaults to standard input.  field_type could be datetime
 or number."""
 
 parser = OptionParser(usage=parser_usage)
+parser.add_option("-r", dest="reverse",
+                  help="Reverse the order of output",
+                  action="store_true", metavar="")
 parser.add_option("-m", dest="makenumber",
                   help="Make field into number before sorting",
                   action="store_true", metavar="")
@@ -30,6 +33,9 @@ DEBUG_PRINT(options, arguments, type(options))
 guess_separator = options.guess_separator
 separator = options.separator
 make_number = options.makenumber and True
+reverse = options.reverse and True
+
+DEBUG_PRINT("make_number, reverse", make_number, reverse)
 
 filename = ""
 field = 0
@@ -68,7 +74,8 @@ if field_type == "number":
     number = True
 
 separator = utilities.sort_lines(lines, datetime_=datetime, field=field,
-                                 number=number, make_number=make_number
+                                 number=number, make_number=make_number,
+                                 reverse=reverse
 )
 
 for line in utilities.render_csv_lines(lines):

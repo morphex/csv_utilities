@@ -1,4 +1,75 @@
 #!/usr/bin/python3
 
+import sys
+from developer_tools import DEBUG_PRINT
 import utilities
 
+from optparse import OptionParser
+
+parser_usage = """usage: %prog filename [field] [field_type] [options]
+
+Filename defaults to standard input.  field_type could be datetime
+or number."""
+
+parser = OptionParser(usage=parser_usage)
+parser.add_option("-m", dest="makenumber",
+                  help="Make field into number before sorting",
+                  action="store_true", metavar="")
+parser.add_option("-g", dest="guess_separator",
+                  help="Guess what the field separator is.  Default is true",
+                  action="store_true", default=True, metavar="")
+
+parser.add_option("-s", "--separator", dest="separator",
+                  help="String that separaters each field",
+                  default=",")
+
+options, arguments = parser.parse_args()
+
+print(options, arguments, type(options))
+
+guess_separator = options.guess_separator
+separator = options.separator
+make_number = options.makenumber and True
+
+filename = ""
+field = 0
+field_type = "number"
+
+try:
+    filename = arguments[0]
+    field = int(arguments[1])
+    field_type = arguments[2]
+except IndexError:
+    pass
+except ValueError:
+    print("Field number needs to be an integer:", arguments[1])
+    parser.print_usage()
+    sys.exit(1)
+
+if not filename:
+    filename = "-"
+
+if filename == "-":
+    file = sys.stdin
+else:
+    file = open(filename, "r")
+
+lines = []
+
+for line in file.readlines():
+    lines.append(line.strip())
+
+datetime = False
+number = False
+
+if field_type == "datetime":
+    datetime = True
+if field_type == "number":
+    number = True
+    
+separator = utilities.sort_lines(lines, datetime_=datetime, field=field,
+                                 number=number, make_number=make_number
+)
+
+for line in utilities.render_csv_lines(lines):
+    print(separator.join(line))

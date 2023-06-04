@@ -185,7 +185,7 @@ def csv_split(line, separator):
                 
     
 def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False,
-               number=False, make_number=False):
+               number=False, make_number=False, reverse=False):
     """Sorts CSV lines based on a field."""
     separator = guess_separator(csv_lines)
     has_header = SNIFFER.has_header("\n".join(csv_lines[0:3]))
@@ -198,6 +198,7 @@ def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False,
         for index in range(len(csv_lines)):
             DEBUG_PRINT("CSV line:", csv_lines[index])
             number_ = csv_lines[index][field].replace(",", ".")
+            DEBUG_PRINT("make_number in sort_lines", make_number)
             if make_number:
                 number_ = convert_text_to_number(number_)
             else:
@@ -215,6 +216,8 @@ def sort_lines(csv_lines, datetime_=True, field=0, keep_datetime_objects=False,
     if datetime_ and not keep_datetime_objects:
         for index in range(len(csv_lines)):
             csv_lines[index][field] = csv_lines[index][field].strftime(strptime_format)
+    if reverse:
+        csv_lines.reverse()
     return separator
 
 def print_sort_lines(filename):

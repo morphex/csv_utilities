@@ -239,13 +239,15 @@ def sort_lines_wrapper(lines, sort_field=0, keep_datetime_objects=False):
                            keep_datetime_objects=keep_datetime_objects)
     return lines, separator
 
-def render_csv_lines(lines, separator=",", string_type=type("")):
+def render_csv_lines(lines, separator=",", string_type=type(""), escape=True):
     new_lines = []
     for line in lines:
         new_line = []
         for item in line:
             if type(item) != string_type:
                 item = str(item)
+            if escape and separator in item:
+                item = '"' + item + '"'
             new_line.append(item)
         new_lines.append(new_line)
     return new_lines
